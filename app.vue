@@ -1,7 +1,20 @@
 <!-- prettier-ignore -->
 <template>
   <div>
+    <!-- Loading ceremony / curtain reveal -->
+    <Transition name="curtain">
+      <div v-if="loading" class="loading-screen">
+        <div class="loading-inner">
+          <svg class="loading-x" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M50 6C52 6 56 28 58 34C62 28 78 8 82 12C86 16 66 32 60 38C66 40 90 42 90 46C90 50 66 50 60 50C66 54 86 72 82 78C78 82 62 66 58 56 54 48 90 46 66 44 58C38 66 22 82 18 78C14 72 34 54 40 48C34 48 10 50 10 46C10 42 34 40 40 38C34 32 14 16 18 12C22 8 38 28 42 34C44 28 48 6 50 6Z" fill="currentColor"/>
+          </svg>
+          <p class="loading-text">Follow the X</p>
+        </div>
+      </div>
+    </Transition>
+
     <NuxtPage />
+
     <!-- Custom cursor: Istorya X mark (hand-drawn brand asset) -->
     <div
       ref="cursorEl"
@@ -9,7 +22,7 @@
       aria-hidden="true"
     >
       <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M50 6C52 6 56 28 58 34C62 28 78 8 82 12C86 16 66 32 60 38C66 40 90 42 90 46C90 50 66 50 60 50C66 54 86 72 82 78C78 82 62 66 56 58C54 66 52 90 50 90C48 90 46 66 44 58C38 66 22 82 18 78C14 72 34 54 40 50C34 50 10 50 10 46C10 42 34 40 40 38C34 32 14 16 18 12C22 8 38 28 42 34C44 28 48 6 50 6Z" fill="currentColor"/>
+        <path d="M50 6C52 6 56 28 58 34C62 28 78 8 82 12C86 16 66 32 60 38C66 40 90 42 90 46C90 50 66 50 60 50C66 54 86 72 82 78C78 82 62 66 58 56 54 48 90 46 66 44 58C38 66 22 82 18 78C14 72 34 54 40 48C34 48 10 50 10 46C10 42 34 40 40 38C34 32 14 16 18 12C22 8 38 28 42 34C44 28 48 6 50 6Z" fill="currentColor"/>
       </svg>
     </div>
     <!-- Scroll progress indicator -->
@@ -21,6 +34,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 
 const cursorEl = ref<HTMLElement | null>(null)
+const loading = ref(true)
 
 let raf = 0
 let mouseX = 0
@@ -53,7 +67,31 @@ function animate() {
   raf = requestAnimationFrame(animate)
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // Initialize Lenis smooth scroll
+  const { default: Lenis } = await import('lenis')
+  const lenis = new Lenis({
+    duration: 1.2,
+    easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    smoothWheel: true,
+  })
+  ;(window as unknown as Record<string, unknown>).__lenis = lenis
+
+  function lenisRaf(time: number) {
+    lenis.raf(time)
+    requestAnimationFrame(lenisRaf)
+  }
+  requestAnimationFrame(lenisRaf)
+
+  // Loading ceremony - dismiss after 2.2s
+  setTimeout(() => {
+    loading.value = false
+    // Unlock scroll after curtain lifts
+    document.body.style.overflow = ''
+  }, 2200)
+  document.body.style.overflow = 'hidden'
+
+  // Custom cursor
   if (window.matchMedia('(pointer: fine)').matches) {
     document.addEventListener('mousemove', onMouseMove)
     document.querySelectorAll('a, button, [role="button"]').forEach(el => {
@@ -63,6 +101,7 @@ onMounted(() => {
     animate()
   }
 })
+
 onUnmounted(() => {
   cancelAnimationFrame(raf)
   document.removeEventListener('mousemove', onMouseMove)
@@ -70,9 +109,54 @@ onUnmounted(() => {
 </script>
 
 <style>
-/* Istorya X cursor — hand-drawn brand mark */
-* { cursor: none !important; }
+/* Loading ceremony */
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background-color: var(--color-uling, #0B0F1A);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.loading-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  animation: loadingPulse 1.8s ease-in-out infinite;
+}
+.loading-x {
+  width: 48px;
+  height: 48px;
+  color: #D4A853;
+  filter: drop-shadow(0 0 20px rgba(212, 168, 83, 0.5));
+}
+.loading-text {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: rgba(240, 237, 230, 0.4);
+}
+@keyframes loadingPulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
 
+/* Curtain transition */
+.curtain-leave-active {
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.curtain-leave-to {
+  opacity: 0;
+  transform: scale(1.05);
+}
+
+/* Istorya X cursor — hand-drawn brand mark */
+* {
+  cursor: none !important;
+}
 .cursor-x {
   position: fixed;
   top: 0;
@@ -86,24 +170,21 @@ onUnmounted(() => {
   transition: color 0.3s ease, filter 0.3s ease, width 0.3s ease, height 0.3s ease;
   will-change: transform;
 }
-
 .cursor-x.hovering {
   width: 48px;
   height: 48px;
   color: #D4A853;
   filter: drop-shadow(0 0 12px rgba(212, 168, 83, 0.6));
 }
-
 .cursor-x svg {
   width: 100%;
   height: 100%;
 }
-
 @media (prefers-reduced-motion: reduce) {
   .cursor-x { display: none; }
   * { cursor: auto !important; }
+  .loading-screen { display: none; }
 }
-
 @media (pointer: coarse) {
   .cursor-x { display: none; }
   * { cursor: auto !important; }
