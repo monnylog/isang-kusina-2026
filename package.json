@@ -1,0 +1,30 @@
+{
+  "name": "isang-kusina-2026",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint ."
+  },
+  "overrides": {
+    "serialize-javascript": "7.0.4"
+  },
+  "dependencies": {
+    "@nuxtjs/google-fonts": "^3.2.0",
+    "@nuxtjs/tailwindcss": "^6.12.1",
+    "gsap": "^3.12.5",
+    "howler": "^2.2.4",
+    "lenis": "^1.1.14",
+    "nuxt": "3.19.3"
+  },
+  "devDependencies": {
+    "@types/howler": "^2.2.11",
+    "typescript": "^5.4.5",
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0"
+  }
+}
