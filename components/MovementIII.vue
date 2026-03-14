@@ -12,7 +12,7 @@
         >{{ char === ' ' ? '\u00A0' : char }}</span>
       </div>
 
-      <!-- Floating editorial images -->
+      <!-- Floating editorial images with parallax -->
       <div class="image-gallery" ref="galleryEl">
         <div class="editorial-image img-1" ref="img1El">
           <div class="img-placeholder">
@@ -98,15 +98,18 @@ onMounted(async () => {
       )
     }
 
-    // Floating images cascade in
+    // Floating images cascade in with parallax depth
     const imgs = [img1El.value, img2El.value, img3El.value, img4El.value]
+    const rotations = [-3, 2, -1.5, 5]
+    const parallaxSpeeds = [-30, -50, -20, -60]
+
     gsap.fromTo(
       imgs,
-      { opacity: 0, y: 60, rotate: (i: number) => [-3, 2, -1.5, 5][i] },
+      { opacity: 0, y: 60, rotate: (i: number) => rotations[i] },
       {
         opacity: 1,
         y: 0,
-        rotate: (i: number) => [-3, 2, -1.5, 5][i],
+        rotate: (i: number) => rotations[i],
         duration: 0.9,
         stagger: 0.2,
         ease: 'power3.out',
@@ -117,6 +120,21 @@ onMounted(async () => {
         },
       },
     )
+
+    // Continuous parallax on each image at different speeds
+    imgs.forEach((img, i) => {
+      if (!img) return
+      gsap.to(img, {
+        y: parallaxSpeeds[i],
+        ease: 'none',
+        scrollTrigger: {
+          trigger: galleryEl.value,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: 0.6,
+        },
+      })
+    })
   }, sectionEl.value!)
 })
 
@@ -175,12 +193,25 @@ onUnmounted(() => {
 .editorial-image {
   position: absolute;
   opacity: 0;
+  will-change: transform;
 }
 
-.editorial-image:nth-child(1) { transform: rotate(-3deg) translate(-30%, 0); z-index: 4; }
-.editorial-image:nth-child(2) { transform: rotate(2deg) translate(10%, -10%); z-index: 3; }
-.editorial-image:nth-child(3) { transform: rotate(-1.5deg) translate(50%, 5%); z-index: 2; }
-.editorial-image:nth-child(4) { transform: rotate(5deg) translate(90%, -5%); z-index: 1; }
+.editorial-image:nth-child(1) {
+  transform: rotate(-3deg) translate(-30%, 0);
+  z-index: 4;
+}
+.editorial-image:nth-child(2) {
+  transform: rotate(2deg) translate(10%, -10%);
+  z-index: 3;
+}
+.editorial-image:nth-child(3) {
+  transform: rotate(-1.5deg) translate(50%, 5%);
+  z-index: 2;
+}
+.editorial-image:nth-child(4) {
+  transform: rotate(5deg) translate(90%, -5%);
+  z-index: 1;
+}
 
 @media (max-width: 767px) {
   .editorial-image:nth-child(1) { transform: rotate(-3deg) translate(-10%, 0); }
@@ -197,6 +228,12 @@ onUnmounted(() => {
   display: flex;
   align-items: flex-end;
   padding: 1rem;
+  transition: border-color 0.4s ease, background 0.4s ease;
+}
+
+.editorial-image:hover .img-placeholder {
+  border-color: rgba(212, 168, 83, 0.3);
+  background: rgba(240, 237, 230, 0.08);
 }
 
 .img-label {
