@@ -2,14 +2,14 @@
 <template>
   <div>
     <NuxtPage />
-    <!-- Custom cursor: Istorya X mark -->
+    <!-- Custom cursor: Istorya X mark (hand-drawn brand asset) -->
     <div
       ref="cursorEl"
       class="cursor-x"
       aria-hidden="true"
     >
       <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M50 0C50 0 58 38 100 50C58 62 50 100 50 100C50 100 42 62 0 50C42 38 50 0 50 0Z" fill="currentColor"/>
+        <path d="M50 6C52 6 56 28 58 34C62 28 78 8 82 12C86 16 66 32 60 38C66 40 90 42 90 46C90 50 66 50 60 50C66 54 86 72 82 78C78 82 62 66 56 58C54 66 52 90 50 90C48 90 46 66 44 58C38 66 22 82 18 78C14 72 34 54 40 50C34 50 10 50 10 46C10 42 34 40 40 38C34 32 14 16 18 12C22 8 38 28 42 34C44 28 48 6 50 6Z" fill="currentColor"/>
       </svg>
     </div>
     <!-- Scroll progress indicator -->
@@ -34,134 +34,78 @@ function onMouseMove(e: MouseEvent) {
   mouseY = e.clientY
 }
 
-function animateCursor() {
-  curX += (mouseX - curX) * 0.15
-  curY += (mouseY - curY) * 0.15
-  if (cursorEl.value) {
-    const scale = isHovering ? 1.6 : 1
-    cursorEl.value.style.transform = `translate(${curX}px, ${curY}px) translate(-50%, -50%) scale(${scale})`
-  }
-  raf = requestAnimationFrame(animateCursor)
+function onMouseEnterInteractive() {
+  isHovering = true
+  cursorEl.value?.classList.add('hovering')
+}
+function onMouseLeaveInteractive() {
+  isHovering = false
+  cursorEl.value?.classList.remove('hovering')
 }
 
-function onMouseEnterInteractive() { isHovering = true }
-function onMouseLeaveInteractive() { isHovering = false }
-
-// Lenis smooth scroll initialization
-let lenis: import('lenis').default | null = null
-
-onMounted(async () => {
-  // Reduce motion: skip Lenis
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (!prefersReduced) {
-    const { default: Lenis } = await import('lenis')
-    lenis = new Lenis({
-      duration: 1.2,
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-    })
-    function raf2(time: number) {
-      lenis?.raf(time)
-      requestAnimationFrame(raf2)
-    }
-    requestAnimationFrame(raf2)
-    // Expose lenis globally for ScrollTrigger integration
-    ;(window as unknown as Record<string, unknown>).__lenis = lenis
+function animate() {
+  const ease = 0.15
+  curX += (mouseX - curX) * ease
+  curY += (mouseY - curY) * ease
+  if (cursorEl.value) {
+    cursorEl.value.style.transform = `translate(${curX}px, ${curY}px) translate(-50%, -50%) rotate(${isHovering ? '45deg' : '0deg'})`
   }
+  raf = requestAnimationFrame(animate)
+}
 
-  window.addEventListener('mousemove', onMouseMove, { passive: true })
-  animateCursor()
-
-  // Add hover detection on interactive elements
-  document.querySelectorAll('a, button, [role="button"], .interactive').forEach(el => {
-    el.addEventListener('mouseenter', onMouseEnterInteractive)
-    el.addEventListener('mouseleave', onMouseLeaveInteractive)
-  })
+onMounted(() => {
+  if (window.matchMedia('(pointer: fine)').matches) {
+    document.addEventListener('mousemove', onMouseMove)
+    document.querySelectorAll('a, button, [role="button"]').forEach(el => {
+      el.addEventListener('mouseenter', onMouseEnterInteractive)
+      el.addEventListener('mouseleave', onMouseLeaveInteractive)
+    })
+    animate()
+  }
 })
-
 onUnmounted(() => {
-  window.removeEventListener('mousemove', onMouseMove)
   cancelAnimationFrame(raf)
-  lenis?.destroy()
+  document.removeEventListener('mousemove', onMouseMove)
 })
 </script>
 
 <style>
-/* -- Global resets & CSS custom properties -- */
-:root {
-  --color-gabi: #0b0f1a;
-  --color-vega: #d4a853;
-  --color-lupa: #3b2f25;
-  --color-bigas: #f0ede6;
-  --color-uling: #1e1e1e;
-  --color-istorya-orange: #e8692a;
-}
+/* Istorya X cursor — hand-drawn brand mark */
+* { cursor: none !important; }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  scroll-behavior: auto; /* Lenis handles this */
-}
-
-body {
-  background-color: var(--color-gabi);
-  color: var(--color-bigas);
-  font-family: 'Inter', system-ui, sans-serif;
-  cursor: none;
-  overflow-x: hidden;
-}
-
-/* Restore cursor on touch devices */
-@media (hover: none) {
-  body {
-    cursor: auto;
-  }
-  .cursor-x {
-    display: none !important;
-  }
-}
-
-/* Custom cursor: Istorya X mark (four-pointed star) */
 .cursor-x {
   position: fixed;
   top: 0;
   left: 0;
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   pointer-events: none;
   z-index: 9999;
-  transform: translate(-50%, -50%);
-  transition: opacity 0.3s ease;
-  color: var(--color-vega);
-  filter: drop-shadow(0 0 4px rgba(212, 168, 83, 0.4));
-  mix-blend-mode: screen;
+  color: #E8734A;
+  filter: drop-shadow(0 0 6px rgba(232, 115, 74, 0.4));
+  transition: color 0.3s ease, filter 0.3s ease, width 0.3s ease, height 0.3s ease;
+  will-change: transform;
+}
+
+.cursor-x.hovering {
+  width: 48px;
+  height: 48px;
+  color: #D4A853;
+  filter: drop-shadow(0 0 12px rgba(212, 168, 83, 0.6));
 }
 
 .cursor-x svg {
   width: 100%;
   height: 100%;
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-              color 0.3s ease;
 }
 
-/* Hover state: enlarge + shift to orange */
-.cursor-x:hover svg,
-body:has(a:hover) .cursor-x svg,
-body:has(button:hover) .cursor-x svg {
-  color: var(--color-istorya-orange);
-}
-
-/* Prefers reduced motion: show everything statically */
 @media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+  .cursor-x { display: none; }
+  * { cursor: auto !important; }
+}
+
+@media (pointer: coarse) {
+  .cursor-x { display: none; }
+  * { cursor: auto !important; }
 }
 </style>
